@@ -2,15 +2,10 @@
   <Import Project="$(RepoRoot)eng/pkg/Pack.props"/>
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <!-- To include the DLL and PDBs of the underlying projects
-    We need to remove the IncludeBuildOutput=false. This also generates a
-    Microsoft.ML.dll in the nuget package, and a Microsoft.ML.pdb in the .snupkg
-    But these are to be ignored, as they don't contain anything meaningful-->
-    <!-- <IncludeBuildOutput>false</IncludeBuildOutput> -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
     <NoWarn>$(NoWarn);NU5127;NU5128</NoWarn>
     <PackageDescription>ML.NET is a cross-platform open-source machine learning framework which makes machine learning accessible to .NET developers.</PackageDescription>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Microsoft.ML.DataView/Microsoft.ML.DataView.csproj" />
@@ -54,18 +49,19 @@
   </ItemGroup>
 <PropertyGroup>
   <!--Include Project References output-->
-  <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CopyProjectReferencesToPackage</TargetsForTfmSpecificContentInPackage>
+  <TargetsForTfmSpecificDebugSymbolsInPackage>$(TargetsForTfmSpecificDebugSymbolsInPackage);CopyProjectReferencesToPackage</TargetsForTfmSpecificDebugSymbolsInPackage>
 </PropertyGroup>
   <Target DependsOnTargets="ResolveReferences" Name="CopyProjectReferencesToPackage">
     <ItemGroup>
       <!--Include DLLs of Project References-->
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')->WithMetadataValue('IncludeInNuget','true'))"/>
+      <TfmSpecificPackageFile Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')->WithMetadataValue('IncludeInNuget','true'))" PackagePath="lib/$(TargetFramework)"/>
       <!--Include PDBs of Project References-->
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')->WithMetadataValue('IncludeInNuget','true')->Replace('.dll', '.pdb'))"/>
+      <TfmSpecificDebugSymbolsFile Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')->WithMetadataValue('IncludeInNuget','true')->Replace('.dll', '.pdb'))"  PackagePath="lib/$(TargetFramework)"/>
       <!--Include PDBs for Native binaries-->
       <!--The path needed to be hardcoded for this to work on our publishing CI-->
-      <BuildOutputInPackage Condition="Exists('$(PackageAssetsPath)$(PackageIdFolderName)\runtimes\win-x86\native\LdaNative.pdb')" Include="$(PackageAssetsPath)$(PackageIdFolderName)\runtimes\win-x86\native\LdaNative.pdb" TargetPath="..\..\runtimes\win-x86\native"/>
-      <BuildOutputInPackage Condition="Exists('$(PackageAssetsPath)$(PackageIdFolderName)\runtimes\win-x64\native\LdaNative.pdb')" Include="$(PackageAssetsPath)$(PackageIdFolderName)\runtimes\win-x64\native\LdaNative.pdb" TargetPath="..\..\runtimes\win-x64\native"/>
+      <TfmSpecificDebugSymbolsFile Condition="Exists('$(PackageAssetsPath)$(PackageIdFolderName)\runtimes\win-x86\native\LdaNative.pdb')" Include="$(PackageAssetsPath)$(PackageIdFolderName)\runtimes\win-x86\native\LdaNative.pdb" TargetPath="..\..\runtimes\win-x86\native"/>
+      <TfmSpecificDebugSymbolsFile Condition="Exists('$(PackageAssetsPath)$(PackageIdFolderName)\runtimes\win-x64\native\LdaNative.pdb')" Include="$(PackageAssetsPath)$(PackageIdFolderName)\runtimes\win-x64\native\LdaNative.pdb" TargetPath="..\..\runtimes\win-x64\native"/>
     </ItemGroup>
   </Target>
 </Project>
